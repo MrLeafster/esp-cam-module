@@ -118,8 +118,8 @@ void app_main(void)
 Captured frames will be saved to:
 
 ```
-/sdcard/cam_frame_1.jpg
-/sdcard/cam_frame_2.jpg
+/sdcard/crash_1.jpg
+/sdcard/crash_2.jpg
 ...
 ```
 
@@ -131,19 +131,19 @@ Once you've captured the JPEG image sequence:
 
 ### 1. Copy Images from SD Card
 
-Use a card reader or serial transfer tool to copy all `cam_frame_XXXXX.jpg` images to your computer into a single folder.
+Use a card reader or serial transfer tool to copy all `crash_XXXX.mjpeg` images to your computer into a single folder.
 
 ### 2. Convert to AVI (MJPEG Codec)
 
 In the terminal, run:
 
 ```bash
-ffmpeg -framerate 20 -i cam_frame_%d.jpg -c:v mjpeg output.avi
+ffmpeg -framerate 20 -i crash_%d.mjpeg -c:v mjpeg output.avi
 ```
 
 > 📌 Notes:
 > - `-framerate 20` should match `CAMERA_HANDLER_FRAMERATE_HZ`.
-> - `%d` matches indexed filenames like `cam_frame_1.jpg`.
+> - `%d` matches indexed filenames like `crash_1.mjpeg`.
 
 ### 3. Play the Video
 
