@@ -52,6 +52,11 @@
 #define CAMERA_HANDLER_SAVE_PATH "/sdcard"
 
 /**
+ * @brief Number of the GPIO pin which is used as a trigger for a dashcam cyclic func
+ */
+#define CAMERA_HANDLER_GPIO_TRIGGER_PIN_NUM (12)
+
+/**
  * @brief Camera GPIO pin assignments.
  */
 #define PWDN_GPIO_NUM     32 /**< Power-down pin. */

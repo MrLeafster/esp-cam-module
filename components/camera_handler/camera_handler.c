@@ -12,6 +12,7 @@
 #include "soc/soc.h"
 #include "soc/rtc_cntl_reg.h"
 #include "driver/rtc_io.h"
+#include "driver/gpio.h"
 
 #include "freertos/FreeRTOS.h"
 #include "freertos/task.h"
@@ -65,6 +66,20 @@ uint16_t _get_current_crash_index(const char *folder_path);
  * @param pvParameters Parameters passed to the task (unused).
  */
 void _record_circular_camera_video_task(void *pvParameters);
+
+/**
+ * @brief 
+ * This is a interupt handler for the GPIO pin used to
+ * trigger the recording process of the camera
+ */
+static void IRAM_ATTR _camera_trigger_gpio_isr_handler(void* arg);
+
+/**
+ * @brief
+ * Initializator for the GPIO pin used to
+ * trigger the recording process of the camera
+ */
+void _camera_trigger_gpio_init();
 
 /*******************************************************************************/
 /*                          STATIC DATA & CONSTANTS                            */
@@ -147,6 +162,8 @@ void camera_handler_init()
         CAMERA_HANDLER_TASK_PRIORITY,
         NULL
     );
+
+    _camera_trigger_gpio_init();
 }
 
 void camera_handler_save_buffer(cam_timestamp_packet *new_packet)
@@ -294,6 +311,27 @@ void _record_circular_camera_video_task(void *pvParameters)
     }
 }
 
+void _camera_trigger_gpio_init()
+{
+    gpio_set_direction(CAMERA_HANDLER_GPIO_TRIGGER_PIN_NUM, GPIO_MODE_INPUT);
+    gpio_set_intr_type(CAMERA_HANDLER_GPIO_TRIGGER_PIN_NUM, GPIO_INTR_POSEDGE);
+    gpio_set_intr_type(CAMERA_HANDLER_GPIO_TRIGGER_PIN_NUM, GPIO_INTR_ANYEDGE);
+
+    gpio_isr_handler_add(CAMERA_HANDLER_GPIO_TRIGGER_PIN_NUM, _camera_trigger_gpio_isr_handler, NULL);
+}
+
 /*******************************************************************************/
 /*                             INTERRUPT HANDLERS                              */
 /*******************************************************************************/
+
+static void _camera_trigger_gpio_isr_handler(void* arg)
+{
+    cam_timestamp_packet new_packet;
+    snprintf(
+        new_packet.timestamp, 
+        sizeof(new_packet.timestamp), 
+        "crash_%d", 
+        camera_handler_get_next_index()
+    );
+    camera_handler_save_buffer(&new_packet);
+}
