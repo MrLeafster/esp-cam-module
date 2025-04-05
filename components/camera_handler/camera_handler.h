@@ -1,5 +1,5 @@
-#ifndef HEADER_FILE_H
-#define HEADER_FILE_H
+#ifndef CAMAHNDLER_HEADER_FILE_H
+#define CAMAHNDLER_HEADER_FILE_H
 
 /**
  * @file camera_handler.h
@@ -113,4 +113,4 @@ uint16_t camera_handler_get_next_index();
  */
 void camera_handler_direct_record();
 
-#endif /* HEADER_FILE_H */
+#endif /* CAMAHNDLER_HEADER_FILE_H */
