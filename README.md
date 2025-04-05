@@ -1,32 +1,158 @@
-# _Sample project_
+# ESP32 Emergency Dash Camera Video Recorder
 
-(See the README.md file in the upper level 'examples' directory for more information about examples.)
+This project captures MJPEG frames from a camera module using the ESP32 and saves them as individual JPEGs on an SD card. The JPEGs are grouped as MJPEG sequence that can be encoded to other video format on the host using `ffmpeg`.
 
-This is the simplest buildable example. The example is used by command `idf.py create-project`
-that copies the project to user specified path and set it's name. For more information follow the [docs page](https://docs.espressif.com/projects/esp-idf/en/latest/api-guides/build-system.html#start-a-new-project)
+---
 
-
-
-## How to use example
-We encourage the users to use the example as a template for the new projects.
-A recommended way is to follow the instructions on a [docs page](https://docs.espressif.com/projects/esp-idf/en/latest/api-guides/build-system.html#start-a-new-project).
-
-## Example folder contents
-
-The project **sample_project** contains one source file in C language [main.c](main/main.c). The file is located in folder [main](main).
-
-ESP-IDF projects are built using CMake. The project build configuration is contained in `CMakeLists.txt`
-files that provide set of directives and instructions describing the project's source files and targets
-(executable, library, or both). 
-
-Below is short explanation of remaining files in the project folder.
+## 📁 Project Structure
 
 ```
-├── CMakeLists.txt
+.
+├── components
+│   ├── camera_handler         # Handles camera configuration and image capturing
+│   │   ├── camera_handler.c
+│   │   ├── camera_handler.h
+│   │   └── CMakeLists.txt
+│   └── sdcard                 # Manages SD card initialization and file system mount
+│       ├── sdcard.c
+│       ├── sdcard.h
+│       └── CMakeLists.txt
 ├── main
-│   ├── CMakeLists.txt
-│   └── main.c
-└── README.md                  This is the file you are currently reading
+│   ├── main.c                 # Application entry point
+│   ├── CMakeLists.txt
+│   └── idf_component.yml
+├── CMakeLists.txt             # Top-level build configuration
+├── partitions.csv             # Partition table
+├── sdkconfig                  # ESP-IDF config
+└── README.md                  # This file
 ```
-Additionally, the sample project contains Makefile and component.mk files, used for the legacy Make based build system. 
-They are not used or needed when building with CMake and idf.py.
+
+---
+
+## 🔧 Features
+
+- Configurable camera capture resolution and quality
+- Buffered MJPEG image storage
+- Filesystem-based saving to `/sdcard/`
+- Modular design (separate components for camera and SD card)
+- Frame indexing and timestamping
+- Circular buffer that on GPIO interrupt saves last 10 seconds of the driving session
+
+---
+
+## 🚀 Getting Started
+
+### Prerequisites
+
+- [ESP-IDF v5.0x](https://docs.espressif.com/projects/esp-idf/en/latest/esp32/get-started/)
+- An ESP32 board with camera support (e.g., ESP32-CAM)
+- A formatted microSD card (FAT32)
+- `ffmpeg` installed on your PC for post-processing
+
+### Pin Configuration
+
+Ensure your camera and SD card wiring matches the following (as set in `camera_handler.h` and `sdcard.h`):
+
+#### Camera (OV2640)
+
+```c
+#define PWDN_GPIO_NUM     32
+#define RESET_GPIO_NUM    -1
+#define XCLK_GPIO_NUM      0
+#define SIOD_GPIO_NUM     26
+#define SIOC_GPIO_NUM     27
+#define Y9_GPIO_NUM       35
+#define Y8_GPIO_NUM       34
+#define Y7_GPIO_NUM       39
+#define Y6_GPIO_NUM       36
+#define Y5_GPIO_NUM       21
+#define Y4_GPIO_NUM       19
+#define Y3_GPIO_NUM       18
+#define Y2_GPIO_NUM        5
+#define VSYNC_GPIO_NUM    25
+#define HREF_GPIO_NUM     23
+#define PCLK_GPIO_NUM     22
+```
+
+#### SD Card (SPI)
+
+```c
+#define SDCARD_MISO  (2)
+#define SDCARD_MOSI  (15)
+#define SDCARD_SCLK  (14)
+#define SDCARD_CS    (13)
+```
+
+Also, to be able to store last 10 seconds of the video buffer, user needs to pull GPIO 12 high. GPIO pin can be manually remaped via the macro:
+
+```c
+#define CAMERA_HANDLER_GPIO_TRIGGER_PIN_NUM (12)
+```
+in the `camera_handler.h` header file.
+
+---
+
+## 🧠 Usage
+
+### Initialization (inside `main.c`)
+
+```c
+#include "camera_handler.h"
+#include "sdcard.h"
+
+void app_main(void)
+{
+    sdcard_init();
+    camera_handler_init();
+
+#ifdef USE_DEMO
+    demo_triggers();
+#endif
+
+    vTaskDelay(portMAX_DELAY);
+}
+```
+
+### Output
+
+Captured frames will be saved to:
+
+```
+/sdcard/cam_frame_1.jpg
+/sdcard/cam_frame_2.jpg
+...
+```
+
+---
+
+## 🎥 Convert to AVI Using FFmpeg
+
+Once you've captured the JPEG image sequence:
+
+### 1. Copy Images from SD Card
+
+Use a card reader or serial transfer tool to copy all `cam_frame_XXXXX.jpg` images to your computer into a single folder.
+
+### 2. Convert to AVI (MJPEG Codec)
+
+In the terminal, run:
+
+```bash
+ffmpeg -framerate 20 -i cam_frame_%d.jpg -c:v mjpeg output.avi
+```
+
+> 📌 Notes:
+> - `-framerate 20` should match `CAMERA_HANDLER_FRAMERATE_HZ`.
+> - `%d` matches indexed filenames like `cam_frame_1.jpg`.
+
+### 3. Play the Video
+
+```bash
+ffplay output.avi
+```
+
+---
+
+## 📜 License
+
+This project is open-source under the MIT License.
