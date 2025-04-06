@@ -22,7 +22,7 @@ void demo_triggers()
     );
     camera_handler_save_buffer(&new_packet);
 
-    vTaskDelay(5000 / portTICK_PERIOD_MS);
+    vTaskDelay(10000 / portTICK_PERIOD_MS);
     snprintf(
         new_packet.timestamp, 
         sizeof(new_packet.timestamp), 

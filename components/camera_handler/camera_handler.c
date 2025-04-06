@@ -254,12 +254,12 @@ void _record_circular_camera_video_task(void *pvParameters)
     uint16_t frame_buffer_size = CAMERA_HANDLER_FRAMERATE_HZ * CAMERA_HANDLER_VIDEO_DURATION_S;
     jpeg_frame_t frame_buffer[frame_buffer_size];
 
+    uint16_t frame_buffer_read_ind = 0;
+    uint16_t frame_buffer_write_ind = 0;
+
     while (1)
     {
         ESP_LOGI(CAMERA_HANDLER_TAG, "Starting to query data!");
-
-        uint16_t frame_buffer_read_ind = 0;
-        uint16_t frame_buffer_write_ind = 0;
 
         TickType_t xLastWakeTime = xTaskGetTickCount();
 
@@ -303,7 +303,7 @@ void _record_circular_camera_video_task(void *pvParameters)
         FILE *f = fopen(full_path, "wb");
         for (int i = frame_buffer_read_ind; i != frame_buffer_write_ind; i = (i + 1) % (frame_buffer_size)) {
             fwrite(frame_buffer[i].jpeg, 1, frame_buffer[i].length, f);
-            free(frame_buffer[i].jpeg);
+            //free(frame_buffer[i].jpeg);
         }
         fclose(f);
 
