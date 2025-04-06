@@ -6,8 +6,8 @@
 #include "camera_handler.h"
 #include "sdcard.h"
 
-#define TAG "MAIN"
-#define USE_DEMO
+#define TAG      "MAIN"
+#define USE_DEMO 0
 
 void demo_triggers()
 {
@@ -37,7 +37,7 @@ void app_main(void)
     sdcard_init();
     camera_handler_init();
 
-#ifdef USE_DEMO
+#if USE_DEMO
     demo_triggers();
 #endif
 
